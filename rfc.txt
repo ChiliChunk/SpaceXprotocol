@@ -1,0 +1,40 @@
+Intro => qu'est ce que c'est le cette rfc
+
+Sommaire
+
+Contexte => quels buts et a quoi ca sert, a quels besoins ça répond
+
+doc techniques
+
+structure des échanges
+	Client
+			{
+			pseudo : <pseudo du client>,
+			nomCommande : <commande>,
+			<data : {}>
+			}
+	Serv : 	{
+			code : <XXX>,
+			message : <message erreur ou de succes>,
+			<data : {}>
+			}
+
+commandes : nom,
+			a quoi ca sert,
+			corps envoie / réponses,
+			dans quels cas autorisés ou necessaires,
+ 
+
+
+			
+fichiers de conf: 	coté serveur,
+				coté client
+
+structures des logs coté serveur:
+	a chaque reception d'un message client
+	<timestamp>		<pseudo>	<nom de commande>	<code réponse de serv>
+
+erreurs possible : 	
+	Code nom et message,
+	Dans quels cas ils apparaissent,
+	
