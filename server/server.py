@@ -7,9 +7,16 @@ import json
 lockName = threading.Semaphore()
 mapPseudo = {}
 
-def addNewPseudo(pseudo , socket):
+
+def addUser(pseudo, socket):
     lockName.acquire()
-    mapPseudo[pseudo] = socket
+    mapPseudo[socket] = pseudo
+    lockName.release()
+
+
+def removeUser(socket):
+    lockName.acquire()
+    del mapPseudo[socket]
     lockName.release()
 
 
@@ -25,10 +32,14 @@ def traiter_client(socket_client):
 
         message = 'error : unknown exchange'
         if jsonData["exchange"] == 'login':
-            addNewPseudo(jsonData["pseudo"] , sock_client)
+            addUser(jsonData["pseudo"], sock_client)
+            message = "{code : 200}"
             print(mapPseudo)
-
-    # socket_client.send(message.encode())
+        if jsonData["exchange"] == "logout":
+            removeUser(sock_client)
+            message = "{code : 200}"
+            print(mapPseudo)
+        socket_client.send(message.encode())
 
 
 def loadConfiguration():
