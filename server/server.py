@@ -27,18 +27,23 @@ def traiter_client(socket_client):
         ligne = wrapper.readline()[:-1]
         print('ENVOYE PAR CLIENT')
         print(ligne)
-        jsonData = json.loads(ligne)
+        jsonData = {}
+        message = ''
+        canProcess = False
+        try:
+            jsonData = json.loads(ligne)
+            canProcess = True
+        except Exception:
+            message = '{"code" : 499}'
         print(jsonData)
-
-        message = 'error : unknown exchange'
-        if jsonData["exchange"] == 'login':
-            addUser(jsonData["pseudo"], sock_client)
-            message = "{code : 200}"
-            print(mapPseudo)
-        if jsonData["exchange"] == "logout":
-            removeUser(sock_client)
-            message = "{code : 200}"
-            print(mapPseudo)
+        if canProcess:
+            if jsonData["exchange"] == 'login':
+                addUser(jsonData["pseudo"], sock_client)
+                message = '{"code" : 200}'
+            if jsonData["exchange"] == "logout":
+                connected = False
+                removeUser(sock_client)
+                message = '{"code" : 200}'
         socket_client.send(message.encode())
 
 
@@ -52,9 +57,12 @@ def loadConfiguration():
         configuration[data[0]] = data[1].replace("\n", "")
     return configuration
 
+def createMap(row,col):
+    print('create map')
 
 if __name__ == '__main__':
     conf = loadConfiguration()
+    createMap(conf['map_number_row'],conf['map_number_col'])
     print(conf)
     sock_server = socket()  # TCP socket
     sock_server.bind(("", int(conf['port'])))
@@ -69,7 +77,7 @@ if __name__ == '__main__':
             break
     sock_server.shutdown(SHUT_RDWR)
     print('\nshutting down')
-    for t in threading.enumerate():
-        if t != threading.main_thread():
-            t.join()
+    # for t in threading.enumerate():
+    #     if t != threading.main_thread():
+    #         t.join()
     sys.exit(0)
