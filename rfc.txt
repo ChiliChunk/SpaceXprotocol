@@ -1,40 +1,618 @@
-Intro => qu'est ce que c'est le cette rfc
-
-Sommaire
-
-Contexte => quels buts et a quoi ca sert, a quels besoins ça répond
-
-doc techniques
-
-structure des échanges
-	Client
-			{
-			pseudo : <pseudo du client>,
-			nomCommande : <commande>,
-			<data : {}>
-			}
-	Serv : 	{
-			code : <XXX>,
-			message : <message erreur ou de succes>,
-			<data : {}>
-			}
-
-commandes : nom,
-			a quoi ca sert,
-			corps envoie / réponses,
-			dans quels cas autorisés ou necessaires,
  
 
 
-			
-fichiers de conf: 	coté serveur,
-				coté client
 
-structures des logs coté serveur:
-	a chaque reception d'un message client
-	<timestamp>		<pseudo>	<nom de commande>	<code réponse de serv>
+INTERNET-DRAFT                                                 L3 MIASHS
+Expires: -                                                    18/03/2019
 
-erreurs possible : 	
-	Code nom et message,
-	Dans quels cas ils apparaissent,
-	
+
+                            SpaceX Protocol 
+
+
+
+Status of this Memo
+
+
+   This document describes the SpaceX protocol, which allows several
+   clients to connect to a SpaceX server map, represented with several
+   boxes, where they can position a robot who will move on the map,
+   looking for resources. This protocol uses a TCP connexion.
+
+
+   The list of current Internet-Drafts can be accessed at
+   http://www.ietf.org/1id-abstracts.html
+
+   The list of Internet-Draft Shadow Directories can be accessed at
+   http://www.ietf.org/shadow.html
+
+Copyright and License Notice
+
+
+   Copyright (c) <year> IETF Trust and the persons identified as the
+   document authors. All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (http://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document. Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+   to this document. Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
+   the Trust Legal Provisions and are provided without warranty as
+   described in the Simplified BSD License.
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+<>                                                              [Page 1]
+
+RFC                        <SpaceX Protocol>                <18/03/2019>
+
+
+Table of Contents
+
+   1  Introduction  . . . . . . . . . . . . . . . . . . . . . . . . .  3
+     1.1 Glossary . . . . . . . . . . . . . . . . . . . . . . . . . .  3
+     1.2 Main use cases . . . . . . . . . . . . . . . . . . . . . . .  3
+   2 Technical Specifications . . . . . . . . . . . . . . . . . . . .  4
+     2.1. Exchange  . . . . . . . . . . . . . . . . . . . . . . . . .  4
+       2.1.1 Exchange structures  . . . . . . . . . . . . . . . . . .  4
+       2.1.2 List of all available exchange name: . . . . . . . . . .  4
+       2.1.3 Details of each exchanges: . . . . . . . . . . . . . . .  5
+     2.2 Configuration Files  . . . . . . . . . . . . . . . . . . . .  9
+       2.2.1 Server Side  . . . . . . . . . . . . . . . . . . . . . . 10
+       2.2.2 Client Side  . . . . . . . . . . . . . . . . . . . . . . 10
+     2.3 Server side logs file: . . . . . . . . . . . . . . . . . . . 10
+     2.4 Response code and errors : . . . . . . . . . . . . . . . . . 10
+     2.5 Security considerations  . . . . . . . . . . . . . . . . . . 11
+   3 Reference  . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+<>                                                              [Page 2]
+
+RFC                        <SpaceX Protocol>                <18/03/2019>
+
+
+1  Introduction
+
+   SpaceX allowing several clients to connect to a server map, there are
+   some vocabulary that need to be explained and more specified :
+
+1.1 Glossary
+
+   Client : A client is all process that can establish a connection with
+   the server. Each client has one unique pseudo, and can only have one
+   robot.
+
+   Server : The server handle the clients requests, like when the client
+   wants to login, logout, position it robot, or check the list of the
+   other clients connected.
+
+   Request : A request is when an actor (Client or server) asks another
+   actor to do or reply something.
+
+   Reply : A reply is a special message who contains a response to a
+   request, like when a user connects, he gets a "login successfully
+   done" message.
+
+   	
+1.2 Main use cases
+
+   	The nominal case is the following one :
+
+   A client decides to use the protocol, a verification (ping) is made
+   to assert that the client has an access to the server. When the ping
+   is done, the client has to choose a pseudo and send it to the server,
+   so it can verify that there is no other client using the same pseudo.
+   After checking that, the server connect the client with the pseudo he
+   asked for. Once connected, the client receives a copy of the map from
+   the server, which must be refreshed through the simulation. The map
+   contains a specified number of cases, and at the beginning, the
+   client can position his robot wherever he wants, while the case he
+   asks for is unoccupied. Once positioned, the robot can move to the 8
+   adjacent cases, but just after the server has verified that the
+   wanted case his empty. When the robot land to a new case, the server
+   indicate to the client if there are resources available on the case.
+   At the end, the client can stop the connexion when he wants to leave.
+   That would be for the nominal case. Of course, the client could do
+   more actions, but those will be described and specified further.
+
+   	The most common error cases :
+
+   The error cases will be specified and more explained further, but we
+   can say right here the most commons that can be encountered on the
+ 
+
+
+<>                                                              [Page 3]
+
+RFC                        <SpaceX Protocol>                <18/03/2019>
+
+
+   SpaceX protocol, like a wrong ping (the client isn't connected to the
+   server), a login already used, or a movement to a case which is
+   already occupied.
+
+2 Technical Specifications
+
+2.1. Exchange   
+
+2.1.1 Exchange structures
+
+
+       Client :
+
+   		{
+
+      		 pseudo : <client's pseudo>,
+
+      		 exchange: <exchange name>,
+
+      		 <data : {}>
+
+      		 }
+
+       Server response:
+
+   		{
+
+      		 code : <XXX>,
+
+      		 <data : {}>
+
+     		 }
+
+2.1.2 List of all available exchange name:
+
+
+      		 ping
+
+      		 login
+
+      		 logout
+
+      		 placement
+
+      		 move
+
+      		 pause
+
+ 
+
+
+<>                                                              [Page 4]
+
+RFC                        <SpaceX Protocol>                <18/03/2019>
+
+
+      		 continue
+
+      		 listPlayers
+
+      		 changeName
+
+      		 requestStrat
+
+
+2.1.3 Details of each exchanges:
+
+
+   ping :
+
+   The first thing the client will do when launched is to try to ping
+   the server to check if it is connected and ready to communicate.
+   {command=ping}
+
+   Possibles Responses : 
+
+   If the server is available and ready to communicate (code 201)
+
+   Possible errors:
+
+   If the client can't reach the server or doesn't respond the client
+   will warn the user then shut down itself 
+
+
+   login :
+
+   "The client sends to the server a connexion request with the given
+   pseudo. The server check if the pseudo is already used."
+
+   Possible Responses :
+
+   If not, it allows the connexion of the client (code 200).
+
+   Possible errors:
+
+   If the peudo is already used, the server reject the connexion (code
+   401)
+
+   If the pseudo contains less than 2 characters or more than 20
+   characters (code 402)
+
+       	 {command=login}
+
+
+ 
+
+
+<>                                                              [Page 5]
+
+RFC                        <SpaceX Protocol>                <18/03/2019>
+
+
+   logout :
+
+   "The client sends a request to the server for the disconnection,
+   closing the sockets that allow this connection"
+
+   Possible Responses:
+
+   if there is an active connection, it will be closed (code 202)
+
+   {command = logout}	
+
+
+   placement :
+
+   The server send a copy of the map (code 201) to the client and wait
+   for the answer of the client. The map is a grid represented in json
+   with all the other robot on it following this structure :
+
+   map={
+
+   	maxX= The maximum height of the map,
+
+   	maxY = The maximum length of the map,
+
+   	robots=[{the X position of the robot, the Y position of the
+   robot}...] }
+
+
+   	Example of server message:
+
+   {
+
+   	code:201,
+
+   	data:{
+
+   		map:{
+
+   			maxX: 9,
+
+   			maxY: 9,
+
+   			robots:[{6,8},{4,3}]
+
+   		}
+
+   }
+
+ 
+
+
+<>                                                              [Page 6]
+
+RFC                        <SpaceX Protocol>                <18/03/2019>
+
+
+   Then the client have to answer the position where he wants his robot
+   to be. The command is "placement" and the data will follow the
+   following structure 	 data:{position:{X position wished, Y position
+   wished}}
+
+   Example of client message: 	
+
+
+   	 {
+
+      		 pseudo : zouglou31,
+
+      		 exchange:"placement'",
+
+   		 data : {position:{4,5}
+
+   	}
+
+   Possibles responses:
+
+   200 The robot have been placed at the correct position successfully
+
+   Possibles Errors :
+
+   401 Illegal position, the client either tried a position outside the
+   grid, or on another robot
+
+
+   move [-X] :
+
+   "The client sends a request to the server that move the robot to the
+   X case in the map, the server will check if the given X is correct,
+   between 1 and 8"
+
+
+   8 1 2 7 R 3 6 5 4
+
+   R: Robot X: 1-8
+
+   Possibles responses:
+
+   If is correct, the server is gonna move the robot (code 203)
+
+   Possibles errors:
+
+   If the given X isn't correct, the server will show a error message
+   (code 403)
+
+ 
+
+
+<>                                                              [Page 7]
+
+RFC                        <SpaceX Protocol>                <18/03/2019>
+
+
+   {command=move [-X]}
+
+   data = {Robot from <pseudo> has been moved to <X> successfully}
+
+
+   Examples of responses from the server:
+
+
+   C: move -7
+
+   S: Robot from Nacho has been moved to 7 successfully
+
+
+   C: move -10
+
+   S: Error 403: The robot can't move to this place, please select other
+   case between 1 and 8 		
+
+   pause :
+
+   "The client will send a request to the server to pause the robot, as
+   long as the robot is paused, the client will not be able to move him,
+   this command will work only if the client's robot is not paused
+   already"
+
+   Possible responses:
+
+   If is not, the server will pause the robot (code 205)
+
+   Possible errors:
+
+   If the robot is already in pause, the server will show a message
+   (code 405)
+
+
+   {command=pause}
+
+
+   Examples of responses from the server:
+
+   C: pause
+
+   S: <pseudo>'s robot has been paused. Enter "continue" to revert
+   effets.
+
+
+
+   C: pause
+ 
+
+
+<>                                                              [Page 8]
+
+RFC                        <SpaceX Protocol>                <18/03/2019>
+
+
+   S: <pseudo>'s robot has been paused. Enter "continue" to revert
+   effets.
+
+   C:pause
+
+   S: Error 405: <pseudo>'s robot is already in pause !
+
+      		
+
+   continue :
+
+   "The client will send a request to the server allowing him to move
+   his robot again, this command has only effet if a robot is in pause,
+   otherwise it will do nothing"
+
+   Possible responses:
+
+   If the robot is paused, the server will cancel this state and will
+   allow the robot to move again (code 206)
+
+   Possible errors:
+
+   If the robot is not paused, the server will show a message (code 406)
+
+   {command=continue}
+
+
+   Examples of responses from the server:
+
+   C: continue
+
+   S: <pseudo>'s robot can now continue moving. To interrupt enter
+   "pause".
+
+
+
+   C: continue
+
+   S: <pseudo>'s robot can now continue moving. To interrupt enter
+   "pause".
+
+   C: continue
+
+   S: Error 405: <pseudo>'s robot is not in paused !
+
+
+2.2 Configuration Files
+
+ 
+
+
+<>                                                              [Page 9]
+
+RFC                        <SpaceX Protocol>                <18/03/2019>
+
+
+2.2.1 Server Side
+
+   The name of the file is spaceXserver.conf. It is used to configure
+   the server. The file is written following the JSON syntax. Here is
+   the list of the field you can edit: port: <number> To change the port
+   the server use. map_row : <number> To change the number of the lines
+   of the map map_col : <number> To change the number of the columns of
+   the map logs_file : <Path/To/file.logs> To change where the logs file
+   is stored
+
+
+2.2.2 Client Side
+
+   The name of the file is spaceX.conf. It is used to configure the
+   client. The file is written following the JSON syntax. Here is the
+   list of the field you can edit: port: <number> To change the port the
+   client use server_url : <string> To change the url of the server to
+   request 	
+
+
+2.3 Server side logs file:
+
+   The path of the file is defined in the config file
+   (spaceXserver.conf) Each time the server receive a client message,
+   the exchange is written in the log file with the following structur:
+   <timestamp*>   	 <pseudo*>    <exchange name*>    <response code*>
+
+   timestamp : the Timestamp (in second following the Unix time to
+   epoch) when the server receive the request of the client pseudo: The
+   pseudo of the client who send the request exchange name: The name of
+   the exchange (ex: login, move, etc..) response code: The code send by
+   the server to the client after the processing of the request
+
+2.4 Response code and errors :
+
+   The first digit of the status code describe the type of the response
+   by the server
+
+   2XX : Means that the request has been executed without errors
+
+   4XX : Means that the request has not been correctly executed because
+   of the client request.
+
+   5XX : Means that the request has not been correctly executed because
+   of the server.
+
+
+   2XX:
+ 
+
+
+<>                                                             [Page 10]
+
+RFC                        <SpaceX Protocol>                <18/03/2019>
+
+
+   200	The request has been executed successfully
+
+   4XX:
+
+   401	Illegal Position
+
+   5XX:	
+
+2.5 Security considerations
+
+   Server side control
+
+   All request from the clients are evaluated server side to know if
+   they are legal. Thanks to this control, even with another client than
+   the one provided, a user can not execute illegal requests.
+
+   Encrypted
+
+   Then encryption will not be implemented in the first version of the
+   protocol, it's will be a necessary step in the future of the
+   protocol.
+
+3 Reference
+
+   https://fr.wikipedia.org/wiki/Request_for_comments
+   https://www.ietf.org/rfc/rfc1939.txt
+   https://tools.ietf.org/html/rfc2223
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<>                                                             [Page 11]
