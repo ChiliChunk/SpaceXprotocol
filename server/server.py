@@ -4,27 +4,39 @@ import time
 import threading
 import json
 import os.path
+import Robot
+from random import randint
 
 lockName = threading.Semaphore()
 mapPseudo = {}
+cellsWithRessources = {}
 
 
 def addUser(pseudo, socket):
     lockName.acquire()
-    mapPseudo[socket] = pseudo
+    mapPseudo[socket] = Robot.Robot(pseudo)
     lockName.release()
+    return {"code": 200}
 
 
 def removeUser(socket):
     lockName.acquire()
     del mapPseudo[socket]
     lockName.release()
+    return {"code": 200}
 
-def writeLogLine(fileName , pseudo, command, code):
+def mapMessage(row,col):
+    print(row,col)
+    result = {}
+    return result
+
+
+def writeLogLine(fileName, pseudo, command, code):
     with open(fileName, "a") as f:
-        f.write(f"{round(time.time())} {pseudo} {command} {code} \n")
+        f.write(f"{round(time.time())}   {pseudo}   {command}   {code}\n")
 
-def traiter_client(socket_client, LogsFileName):
+
+def traiter_client(socket_client, conf):
     connected = True
     while connected:
         wrapper = socket_client.makefile()
@@ -38,23 +50,25 @@ def traiter_client(socket_client, LogsFileName):
             jsonData = json.loads(ligne)
             canProcess = True
         except Exception:
-            print('in exectp')
-            message = {"code" : 499}
+            message = {"code": 499}
         print(jsonData)
         if canProcess:
             if jsonData["exchange"] == 'login':
-                addUser(jsonData["pseudo"], sock_client)
-                message = {"code" : 200}
+                message = addUser(jsonData["pseudo"], sock_client)
             if jsonData["exchange"] == "logout":
                 connected = False
-                removeUser(sock_client)
-                message = {"code" : 200}
-            writeLogLine(LogsFileName , mapPseudo[sock_client] , jsonData["exchange"] , message["code"]) #FIXME pseudo undefined pour le logout
-        else :
-            if sock_client in mapPseudo.keys():
-                writeLogLine(LogsFileName ,  mapPseudo[sock_client] if sock_client in mapPseudo.keys() else "unknown", "BAD_FORMAT", message["code"]) #FIXME pseudo undefined pour le logout
-        socket_client.send(json.dumps(message).encode())
+                message = removeUser(sock_client)
+            if jsonData["exchange"] == "map":
+                message = mapMessage(conf["map_number_row"] , conf["map_number_col"])
 
+            writeLogLine(conf["logs"], mapPseudo[sock_client].name, jsonData["exchange"],
+                         message["code"])  # FIXME pseudo undefined pour le logout
+        else:
+            if sock_client in mapPseudo.keys():
+                writeLogLine(conf["logs"],
+                             mapPseudo[sock_client].name if sock_client in mapPseudo.keys() else "unknown",
+                             "BAD_FORMAT", message["code"])  # FIXME pseudo undefined pour le logout
+        socket_client.send((json.dumps(message) + "\n").encode())
 
 
 def loadConfiguration():
@@ -67,13 +81,24 @@ def loadConfiguration():
         configuration[data[0]] = data[1].replace("\n", "")
     return configuration
 
-def createMap(row,col):
-    print('create map')
+
+def createMap(row, col, ressources):
+    print(row, col)
+    result = {}
+    ressourcesDict = json.loads(ressources)
+    for i in range(row):
+        for j in range(col):
+            currentRessources = []
+            for key, value in ressourcesDict.items():
+                if randint(1, 100) <= value:
+                    currentRessources.append(key)
+            if len(currentRessources) > 0:
+                result[(i, j)] = currentRessources
+    return result
 
 if __name__ == '__main__':
     conf = loadConfiguration()
-    createMap(conf['map_number_row'],conf['map_number_col'])
-    print(conf)
+    cellsWithRessources = createMap(int(conf['map_number_row']), int(conf['map_number_col']), conf["ressources"])
     sock_server = socket()  # TCP socket
     sock_server.bind(("", int(conf['port'])))
     print(f"Server listening on port : {conf['port']}")
@@ -82,7 +107,7 @@ if __name__ == '__main__':
         try:
             sock_client, adr_client = sock_server.accept()
             print(f"Connection de {adr_client}")
-            threading.Thread(target=traiter_client, args=(sock_client,conf["logs"])).start()
+            threading.Thread(target=traiter_client, args=(sock_client,conf)).start()
         except KeyboardInterrupt:
             break
     sock_server.shutdown(SHUT_RDWR)
