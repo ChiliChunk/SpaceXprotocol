@@ -17,7 +17,7 @@ def traiter_client(socket_client):
     connected = True
     while connected:
         wrapper = socket_client.makefile()
-        ligne = wrapper.readline()[:-1]
+        ligne = wrapper.readline()
         print('ENVOYE PAR CLIENT')
         print(ligne)
         jsonData = json.loads(ligne)
