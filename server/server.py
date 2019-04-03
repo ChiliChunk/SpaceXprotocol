@@ -1,8 +1,9 @@
 from socket import *
 import sys
-import datetime
+import time
 import threading
 import json
+import os.path
 
 lockName = threading.Semaphore()
 mapPseudo = {}
@@ -19,8 +20,11 @@ def removeUser(socket):
     del mapPseudo[socket]
     lockName.release()
 
+def writeLogLine(fileName , pseudo, command, code):
+    with open(fileName, "a") as f:
+        f.write(f"{round(time.time())} {pseudo} {command} {code} \n")
 
-def traiter_client(socket_client):
+def traiter_client(socket_client, LogsFileName):
     connected = True
     while connected:
         wrapper = socket_client.makefile()
@@ -34,17 +38,23 @@ def traiter_client(socket_client):
             jsonData = json.loads(ligne)
             canProcess = True
         except Exception:
-            message = '{"code" : 499}'
+            print('in exectp')
+            message = {"code" : 499}
         print(jsonData)
         if canProcess:
             if jsonData["exchange"] == 'login':
                 addUser(jsonData["pseudo"], sock_client)
-                message = '{"code" : 200}'
+                message = {"code" : 200}
             if jsonData["exchange"] == "logout":
                 connected = False
                 removeUser(sock_client)
-                message = '{"code" : 200}'
-        socket_client.send(message.encode())
+                message = {"code" : 200}
+            writeLogLine(LogsFileName , mapPseudo[sock_client] , jsonData["exchange"] , message["code"]) #FIXME pseudo undefined pour le logout
+        else :
+            if sock_client in mapPseudo.keys():
+                writeLogLine(LogsFileName ,  mapPseudo[sock_client] if sock_client in mapPseudo.keys() else "unknown", "BAD_FORMAT", message["code"]) #FIXME pseudo undefined pour le logout
+        socket_client.send(json.dumps(message).encode())
+
 
 
 def loadConfiguration():
@@ -72,7 +82,7 @@ if __name__ == '__main__':
         try:
             sock_client, adr_client = sock_server.accept()
             print(f"Connection de {adr_client}")
-            threading.Thread(target=traiter_client, args=(sock_client,)).start()
+            threading.Thread(target=traiter_client, args=(sock_client,conf["logs"])).start()
         except KeyboardInterrupt:
             break
     sock_server.shutdown(SHUT_RDWR)
