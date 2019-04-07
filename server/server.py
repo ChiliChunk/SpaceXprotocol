@@ -13,22 +13,22 @@ mapPseudo = {}
 cellsWithRessources = {}
 
 
-def addUser(pseudo, socket):
-    lockRobots.acquire()
-    mapPseudo[socket] = Robot.Robot(pseudo)
-    lockRobots.release()
-    return {"code": 200}
+def addUser(pseudo, socket , col , row):
+    with lockRobots:
+        for sock , robots in mapPseudo.items():
+            if robots.name == pseudo:
+                return {"code" : 401}
+        mapPseudo[socket] = Robot.Robot(pseudo)
+        return mapMessage(row,col,socket)
 
 
 def removeUser(socket):
-    lockRobots.acquire()
-    del mapPseudo[socket]
-    lockRobots.release()
-    return {"code": 200}
+    with lockRobots:
+        del mapPseudo[socket]
+        return {"code": 200}
 
 
 def mapMessage(row, col, socket):
-    print(row, col)
     result = {}
     result["dimension"] = [col, row]
     robotList = []
@@ -46,7 +46,6 @@ def mapMessage(row, col, socket):
 def setPaused(socket, isPaused):
     with lockRobots:
         mapPseudo[socket].isPaused = isPaused
-        print(mapPseudo[socket])
         return {"code": 200}
 
 
@@ -121,7 +120,7 @@ def traiter_client(socket_client, conf):
         print(jsonData)
         if canProcess:
             if jsonData["exchange"] == 'login':
-                message = addUser(jsonData["pseudo"], sock_client)
+                message = addUser(jsonData["pseudo"], sock_client , conf["map_number_col"], conf["map_number_row"])
             if jsonData["exchange"] == "logout":
                 connected = False
                 message = removeUser(sock_client)
@@ -138,14 +137,13 @@ def traiter_client(socket_client, conf):
                 message = move(socket_client, jsonData["data"], conf["map_number_col"], conf["map_number_col"])
 
             print(message)
-            writeLogLine(conf["logs"], mapPseudo[sock_client].name, jsonData["exchange"],
+            writeLogLine(conf["logs"], mapPseudo[sock_client].name if socket_client in mapPseudo else socket_client.getpeername()[0], jsonData["exchange"],
                          message["code"])  # FIXME pseudo undefined pour le logout
         else:
             if sock_client in mapPseudo.keys():
                 writeLogLine(conf["logs"],
-                             mapPseudo[sock_client].name if sock_client in mapPseudo.keys() else "unknown",
+                             mapPseudo[sock_client].name if sock_client in mapPseudo.keys() else socket_client.getpeername()[0],
                              "BAD_FORMAT", message["code"])  # FIXME pseudo undefined pour le logout
-                # TODO f'{socket_client.raddr[0]}:{socket_client.raddr[1] a la place de unknown
         socket_client.send((json.dumps(message) + "\n").encode())
 
 
@@ -178,7 +176,6 @@ if __name__ == '__main__':
     conf = loadConfiguration()
     cellsWithRessources = createMap(int(conf['map_number_row']), int(conf['map_number_col']), conf["ressources"])
     print(cellsWithRessources)
-    print(getRessources(1, 1))
     sock_server = socket()  # TCP socket
     sock_server.bind(("", int(conf['port'])))
     print(f"Server listening on port : {conf['port']}")
