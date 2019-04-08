@@ -43,10 +43,11 @@ def mapMessage(row, col, socket):
         robotList = []
         for sock, robot in mapPseudo.items():
             if sock != socket:
-                robotList.append({"x": robot.x, "y": robot.y, "name": robot.name})
+                robotList.append(( robot.x , robot.y))
         result["data"]["robots"] = robotList
         selfRobot = mapPseudo[socket]
-        result["data"]["self"] = {"x": selfRobot.x, "y": selfRobot.y, "name": selfRobot.name}
+        if selfRobot.x != None:
+            result["data"]["self"] = [(selfRobot.x, selfRobot.y)]
         result["code"] = 200
         print(result)
         return result
