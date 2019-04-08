@@ -1,4 +1,5 @@
-from SpaceXprotocol.client import client
+import client
+
 def loadConfiguration():
     configuration = {}
     conf = open('spaceX.conf', 'r')
@@ -13,7 +14,10 @@ def loadConfiguration():
 def affichGrille(data):
     maxX = data["dimension"][0]
     maxY = data["dimension"][1]
-    mine = data["self"]
+    if("self" in data):
+        mine = data["self"]
+    else:
+        mine = [-1,-1]
     others = data["robots"]
     ret = ""
     for x in range(0, maxX):
@@ -23,7 +27,7 @@ def affichGrille(data):
             elif [x, y] in others:
                 ret += " X "
             else:
-                ret += " _ "
+                ret += " - "
         ret += "\n"
     return ret
 
@@ -48,16 +52,19 @@ def changerPseudo(client):
 if __name__ == "__main__":
     config = loadConfiguration()
 
-    c1 = client.Client(config["serverIP"], config["serverPort"])
+    c1 = client.Client(config["serverIp"], int(config["serverPort"]))
 
     while(True):
         pseudo = input("Entrez un pseudo entre 2 et 20 charactères \n")
+        print("test2")
+
         awnser = c1.connectionRequest(pseudo)
+        print(awnser)
         if(awnser["code"]==200):
             grid = awnser["data"]["map"]
             break
         else:
-            print("Connection refusée par le serveur, code "+awnser["code"]+"\n")
+            print("Connection refusée par le serveur, code "+str(awnser["code"])+"\n")
 
     print(affichGrille(grid))
     #Besoin de rafraichir en cas d'erreur et d'afficher la signification du code

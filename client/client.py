@@ -1,7 +1,7 @@
 import sys
 import json
 from socket import *
-TAILLE_TAMPON =256
+TAILLE_TAMPON =1024
 
 class Client:
     def __init__(self, ipServ, portServ):
@@ -93,9 +93,19 @@ class Client:
         request = request.encode()
         self.sock.send(request)
 
+
     def waitAwnser(self):
-        awnser = self.sock.recv(TAILLE_TAMPON).decode()
+        print("AZER")
+        awnser = self.sock.recv(1024)
         awnser = json.loads(awnser)
+        # wrapper = self.sock.makefile()
+        # while True:
+        #     newline = wrapper.readline()
+        #     print(newline)
+        #     if(newline == ""):
+        #         break
+        #     else:
+        #         awnser+=newline
         return awnser
 
 
