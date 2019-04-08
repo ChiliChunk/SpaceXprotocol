@@ -1,0 +1,22 @@
+pos robots
+les ressources des robots
+robots associés a un pseudo / socket
+les cases qui ont des ressources
+
+monde
+    taille grille
+    hasmap coord robo => pseudo
+    hasmap robo => ressources
+
+grille
+    list robo
+    list casesRemplie #une case n'est rempli que si elle contient des ressources (que aucun robo n'est encore passé)
+
+casesRemplie
+    coord
+    val
+
+obj Robo
+    pseudo
+    coord
+    ressources

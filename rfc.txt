@@ -810,7 +810,7 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
     |     200        |    The request has been executed successfully |  
     |     401        |    Try to use an already existing pseudo      |  
     |     402        |    Try to connect with a name length < 2      |  
-    |     40?        |    Tried to do an action while in pause       |  
+    |     410        |    Tried to do an action while in pause       |
     |     403        |    Try to move outside the map or on another  |  
     |                |    robot                                      |  
     |     404        |    Try to move with an illegal movement       |  
