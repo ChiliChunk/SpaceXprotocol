@@ -8,7 +8,6 @@ class Client:
         self.sock = socket()
         self.sock.connect((ipServ, portServ))
 
-
     def connectionRequest(self,pseudo):
         request = {
             "pseudo": pseudo,
@@ -94,6 +93,7 @@ class Client:
     def waitAwnser(self):
         awnser = self.sock.recv(1024)
         awnser = json.loads(awnser)
+        print(awnser)
         return awnser
 
 

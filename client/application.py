@@ -45,12 +45,16 @@ def deplacement(client):
 def afficherJoueurs(client):
     awnser = client.refreshPlayer()
     print("Tous les joueurs :")
-    for play in awnser["data"]:
-        print(play["pseudo"]+ "\n")
+    for play in awnser:
+        print(play["pseudo"])
+        if "ressources" in play:
+            print(play["ressources"])
+        print("\n")
 
 def changerPseudo(client):
     choice = input("Entrez un nouveau pseudo")
     client.modRequest(choice)
+
 if __name__ == "__main__":
     config = loadConfiguration()
 

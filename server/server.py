@@ -115,7 +115,10 @@ def listOf(socket):
             return {"code": 500}
         robots = []
         for sock , robot in mapPseudo.items():
-            robots.append({"pseudo" : robot.name , "ressources" : robot.ressources})
+            if robot.ressources == {}:
+                robots.append({"pseudo": robot.name})
+            else:
+                robots.append({"pseudo" : robot.name , "ressources" : robot.ressources})
         return ({"code" : 200 , "data" : robots})
 
 
