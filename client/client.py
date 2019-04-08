@@ -95,7 +95,6 @@ class Client:
 
 
     def waitAwnser(self):
-        print("AZER")
         awnser = self.sock.recv(1024)
         awnser = json.loads(awnser)
         # wrapper = self.sock.makefile()

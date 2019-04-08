@@ -14,14 +14,16 @@ def loadConfiguration():
 def affichGrille(data):
     maxX = data["dimension"][0]
     maxY = data["dimension"][1]
-    if("self" in data):
+    if(data["self"]["x"]!= None):
         mine = data["self"]
+        print("Trouve")
     else:
         mine = [-1,-1]
+        print("define")
     others = data["robots"]
     ret = ""
-    for x in range(0, maxX):
-        for y in range(0, maxY):
+    for x in range(0, int(maxX)):
+        for y in range(0, int(maxY)):
             if mine[0] == x and mine[1] == y:
                 ret += " O "
             elif [x, y] in others:
@@ -56,12 +58,10 @@ if __name__ == "__main__":
 
     while(True):
         pseudo = input("Entrez un pseudo entre 2 et 20 charactères \n")
-        print("test2")
-
         awnser = c1.connectionRequest(pseudo)
         print(awnser)
         if(awnser["code"]==200):
-            grid = awnser["data"]["map"]
+            grid = awnser["data"]
             break
         else:
             print("Connection refusée par le serveur, code "+str(awnser["code"])+"\n")
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         y = input()
         awnser = c1.placementRequest([x,y])
         if(awnser["code"] == 200):
-            grid = awnser["data"]["map"]
+            grid = awnser["data"]
             break
         else:
             print("Placement refusé par le serveur, code "+awnser["code"]+"\n")
