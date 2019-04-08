@@ -1,5 +1,6 @@
 import client
 
+
 def loadConfiguration():
     configuration = {}
     conf = open('spaceX.conf', 'r')
@@ -20,8 +21,9 @@ def affichGrille(data):
         mine = [-1,-1]
     others = data["robots"]
     ret = ""
-    for x in range(0, int(maxX)):
-        for y in range(0, int(maxY)):
+    for y in range(0, int(maxY)):
+        for x in range(0, int(maxX)):
+
             if mine[0] == str(x) and mine[1] == str(y):
                 ret += " O "
             elif [str(x), str(y)] in others:
