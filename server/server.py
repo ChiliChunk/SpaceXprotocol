@@ -157,13 +157,12 @@ def traiter_client(socket_client, conf):
                 message = move(socket_client, jsonData["data"], conf["map_number_col"], conf["map_number_col"])
 
             print(message)
-            writeLogLine(conf["logs"], mapPseudo[sock_client].name if socket_client in mapPseudo else socket_client.getpeername()[0], jsonData["exchange"] if "exchange" in jsonData else "INVALID_EXCHANGE",
-                     message["code"])  # FIXME pseudo undefined pour le logout
+            writeLogLine(conf["logs"], mapPseudo[sock_client].name if socket_client in mapPseudo else socket_client.getpeername()[0], jsonData["exchange"],
+                     message["code"])
         else:
-            if sock_client in mapPseudo:
-                writeLogLine(conf["logs"],
-                             mapPseudo[sock_client].name if sock_client in mapPseudo.keys() else socket_client.getpeername()[0],
-                             "BAD_FORMAT", message["code"])  # FIXME pseudo undefined pour le logout
+            writeLogLine(conf["logs"],
+                         mapPseudo[sock_client].name if sock_client in mapPseudo else socket_client.getpeername()[0],
+                         "BAD_FORMAT", message["code"])
         socket_client.send((json.dumps(message) + "\n").encode())
 
 
