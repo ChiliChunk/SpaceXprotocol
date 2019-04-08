@@ -8,6 +8,7 @@ class Client:
         self.sock = socket()
         self.sock.connect((ipServ, portServ))
 
+
     def connectionRequest(self,pseudo):
         request = {
             "pseudo": pseudo,
@@ -27,6 +28,33 @@ class Client:
         self.sendRequest(request)
         return self.waitAwnser()
 
+    def moveRequest(self, direction):
+        request = {
+            "exchange":"move",
+            "data":direction
+        }
+        self.sendRequest(request)
+        return self.waitAwnser()
+    def refreshRequest(self):
+        request = {
+            "exchange": "refresh"
+        }
+        self.sendRequest(request)
+        awnser = self.waitAwnser()
+        if awnser["code"] ==200 :
+            return awnser["data"]["map"]
+        else:
+            print("Mauvais code")
+
+
+    def refreshPlayer(self):
+        request = {
+            "exchange": "listof"
+        }
+        self.sendRequest(request)
+        awnser = self.waitAwnser()
+        return awnser["data"]
+
 
     def logoutRequest(self):
         request = {
@@ -37,6 +65,28 @@ class Client:
         self.sock.close()
         return awnser
 
+    def modRequest(self, newPseudo):
+        request = {
+            "exchange": "mod",
+            "data":newPseudo
+        }
+        self.sendRequest(request)
+        return self.waitAwnser()
+
+    def pauseRequest(self):
+        request = {
+            "exchange": "pause"
+        }
+        self.sendRequest(request)
+        return self.waitAwnser()
+
+    def continueRequest(self):
+        request = {
+            "exchange": "continue"
+        }
+        self.sendRequest(request)
+        return self.waitAwnser()
+    
 
     def sendRequest(self, request):
         request = json.dumps(request)
@@ -45,10 +95,8 @@ class Client:
 
     def waitAwnser(self):
         awnser = self.sock.recv(TAILLE_TAMPON).decode()
-        #print("awnser : " + awnser )
         awnser = json.loads(awnser)
         return awnser
-
 
 
 
