@@ -12,8 +12,12 @@ lockCells = threading.Semaphore()
 mapPseudo = {}
 cellsWithRessources = {}
 
+def checkLoggedIn(socket):
+    return socket in mapPseudo
 
 def addUser(pseudo, socket , col , row):
+    if len(pseudo) < 2:
+        return {"code" : 402}
     with lockRobots:
         for sock , robots in mapPseudo.items():
             if robots.name == pseudo:
@@ -24,27 +28,34 @@ def addUser(pseudo, socket , col , row):
 
 def removeUser(socket):
     with lockRobots:
+        if not checkLoggedIn(socket):
+            return {"code": 500}
         del mapPseudo[socket]
         return {"code": 200}
 
 
 def mapMessage(row, col, socket):
-    result = {}
-    result["dimension"] = [col, row]
-    robotList = []
-    for sock, robot in mapPseudo.items():
-        if sock != socket:
-            robotList.append({"x": robot.x, "y": robot.y, "name": robot.name})
-    result["robots"] = robotList
-    selfRobot = mapPseudo[socket]
-    result["self"] = {"x": selfRobot.x, "y": selfRobot.y, "name": selfRobot.name}
-    result["code"] = 200
-    print(result)
-    return result
+    if not checkLoggedIn(socket):
+        return {"code" : 500}
+    else:
+        result = {"data" : {}}
+        result["data"]["dimension"] = [col, row]
+        robotList = []
+        for sock, robot in mapPseudo.items():
+            if sock != socket:
+                robotList.append({"x": robot.x, "y": robot.y, "name": robot.name})
+        result["data"]["robots"] = robotList
+        selfRobot = mapPseudo[socket]
+        result["data"]["self"] = {"x": selfRobot.x, "y": selfRobot.y, "name": selfRobot.name}
+        result["code"] = 200
+        print(result)
+        return result
 
 
 def setPaused(socket, isPaused):
     with lockRobots:
+        if not checkLoggedIn(socket):
+            return {"code": 500}
         mapPseudo[socket].isPaused = isPaused
         return {"code": 200}
 
@@ -56,12 +67,12 @@ def writeLogLine(fileName, pseudo, command, code):
 
 def changeName(socket, newName):
     with lockRobots:
+        if not checkLoggedIn(socket):
+            return {"code": 500}
         mapPseudo[socket].name = newName
 
 
 def setPosition(socket, x, y, maxX, maxY):
-    print(x)
-    print(y)
     if x >= int(maxX) or x < 0 or y >= int(maxY) or y < 0:  # placement outside of the grid
         return {"code": 411}
     with lockRobots:
@@ -80,6 +91,7 @@ def getRessources(x, y):
         if (x, y) in cellsWithRessources:
             temp = cellsWithRessources[(x, y)]
             del cellsWithRessources[(x, y)]
+            print()
             return temp
         else:
             return []
@@ -88,6 +100,9 @@ def getRessources(x, y):
 def placement(socket, x, y, maxX, maxY):
     if mapPseudo[socket].x != None or mapPseudo[socket].y != None:
         return {"code": 405}
+    with lockRobots:
+        if not checkLoggedIn(socket):
+            return {"code": 500}
     return setPosition(socket, x, y, maxX, maxY)
 
 
@@ -96,10 +111,12 @@ def move(socket, index, maxX, maxY):
         return {"code": 405}
     if index < 1 or index > 8:
         return {"code": 404}
-    else:
-        indexArray = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
-        return setPosition(socket, mapPseudo[socket].x + indexArray[index+1][0], mapPseudo[socket].y + indexArray[index+1][1],
-                    maxX, maxY) #index +1 because placement start at 1
+    with lockRobots:
+        if not checkLoggedIn(socket):
+            return {"code": 500}
+    indexArray = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
+    return setPosition(socket, mapPseudo[socket].x + indexArray[index+1][0], mapPseudo[socket].y + indexArray[index+1][1],
+                maxX, maxY) #index +1 because placement start at 1
 
 
 def traiter_client(socket_client, conf):
@@ -110,16 +127,18 @@ def traiter_client(socket_client, conf):
         print('ENVOYE PAR CLIENT')
         print(ligne)
         jsonData = {}
-        message = ''
+        message = {"code" : 491} #message for valid json but "exchange" not present in json
         canProcess = False
         try:
             jsonData = json.loads(ligne)
-            canProcess = True
+            canProcess = "exchange" in jsonData
         except Exception:
             message = {"code": 499}
         print(jsonData)
+        print(canProcess)
         if canProcess:
             if jsonData["exchange"] == 'login':
+                print('adduser')
                 message = addUser(jsonData["pseudo"], sock_client , conf["map_number_col"], conf["map_number_row"])
             if jsonData["exchange"] == "logout":
                 connected = False
@@ -137,10 +156,10 @@ def traiter_client(socket_client, conf):
                 message = move(socket_client, jsonData["data"], conf["map_number_col"], conf["map_number_col"])
 
             print(message)
-            writeLogLine(conf["logs"], mapPseudo[sock_client].name if socket_client in mapPseudo else socket_client.getpeername()[0], jsonData["exchange"],
-                         message["code"])  # FIXME pseudo undefined pour le logout
+            writeLogLine(conf["logs"], mapPseudo[sock_client].name if socket_client in mapPseudo else socket_client.getpeername()[0], jsonData["exchange"] if "exchange" in jsonData else "INVALID_EXCHANGE",
+                     message["code"])  # FIXME pseudo undefined pour le logout
         else:
-            if sock_client in mapPseudo.keys():
+            if sock_client in mapPseudo:
                 writeLogLine(conf["logs"],
                              mapPseudo[sock_client].name if sock_client in mapPseudo.keys() else socket_client.getpeername()[0],
                              "BAD_FORMAT", message["code"])  # FIXME pseudo undefined pour le logout
