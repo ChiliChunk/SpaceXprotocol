@@ -77,6 +77,8 @@ def setPosition(socket, x, y, maxX, maxY):
         print("ICI")
         return {"code": 411}
     with lockRobots:
+        if mapPseudo[socket].isPaused:
+            return {"code" : 410}
         for robot in mapPseudo.values():
             if robot.x == x and robot.y == y:  # try placement on another robot
                 print("LA")
@@ -106,6 +108,15 @@ def placement(socket, x, y, maxX, maxY):
         if not checkLoggedIn(socket):
             return {"code": 500}
     return setPosition(socket, x, y, maxX, maxY)
+
+def listOf(socket):
+    with lockRobots:
+        if not checkLoggedIn(socket):
+            return {"code": 500}
+        robots = []
+        for sock , robot in mapPseudo.items():
+            robots.append({"pseudo" : robot.name , "ressources" : robot.ressources})
+        return ({"code" : 200 , "data" : robots})
 
 
 def move(socket, index, maxX, maxY):
@@ -158,6 +169,8 @@ def traiter_client(socket_client, conf):
                                     conf["map_number_col"])
             if jsonData["exchange"] == "move":
                 message = move(socket_client, jsonData["data"], conf["map_number_col"], conf["map_number_col"])
+            if jsonData["exchange"] == "listof":
+                message = listOf(socket_client)
 
             print(message)
             writeLogLine(conf["logs"], mapPseudo[sock_client].name if socket_client in mapPseudo else socket_client.getpeername()[0], jsonData["exchange"],
