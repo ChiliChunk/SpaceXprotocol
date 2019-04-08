@@ -425,10 +425,6 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
    X adjacent case in the map, the server will check if the given X is
    correct, between 1 and 8"
 
-                            1 2 3
-                            4 R 5
-                            6 7 8
-
 
    Possible responses:
 
