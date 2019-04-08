@@ -34,7 +34,7 @@ def removeUser(socket):
         return {"code": 200}
 
 
-def mapMessage(row, col, socket):
+def mapMessage( col,row, socket):
     if not checkLoggedIn(socket):
         return {"code" : 500}
     else:
@@ -43,13 +43,12 @@ def mapMessage(row, col, socket):
         robotList = []
         for sock, robot in mapPseudo.items():
             if sock != socket:
-                robotList.append(( robot.x , robot.y))
+                robotList.append(( str(robot.x) , str(robot.y)))
         result["data"]["robots"] = robotList
         selfRobot = mapPseudo[socket]
         if selfRobot.x != None:
-            result["data"]["self"] = [(selfRobot.x, selfRobot.y)]
+            result["data"]["self"] = [str(selfRobot.x), str(selfRobot.y)]
         result["code"] = 200
-        print(result)
         return result
 
 
@@ -74,17 +73,19 @@ def changeName(socket, newName):
 
 
 def setPosition(socket, x, y, maxX, maxY):
-    if x >= int(maxX) or x < 0 or y >= int(maxY) or y < 0:  # placement outside of the grid
+    if int(x) >= int(maxX) or int(x) < 0 or int(y) >= int(maxY) or int(y) < 0:  # placement outside of the grid
+        print("ICI")
         return {"code": 411}
     with lockRobots:
         for robot in mapPseudo.values():
             if robot.x == x and robot.y == y:  # try placement on another robot
+                print("LA")
                 return {"code": 411}
         mapPseudo[socket].x = x
         mapPseudo[socket].y = y
         mapPseudo[socket].addRessources(getRessources(x, y))
         print(mapPseudo[socket])
-        return {"code": 200}
+        return mapMessage(maxX,maxY,socket)
 
 
 def getRessources(x, y):
@@ -110,21 +111,23 @@ def placement(socket, x, y, maxX, maxY):
 def move(socket, index, maxX, maxY):
     if mapPseudo[socket].x == None or mapPseudo[socket].y == None:
         return {"code": 405}
-    if index < 1 or index > 8:
+    if int(index) < 1 or int(index) > 8:
         return {"code": 404}
     with lockRobots:
         if not checkLoggedIn(socket):
             return {"code": 500}
     indexArray = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
-    return setPosition(socket, mapPseudo[socket].x + indexArray[index+1][0], mapPseudo[socket].y + indexArray[index+1][1],
-                maxX, maxY) #index +1 because placement start at 1
+
+    return setPosition(socket, int(mapPseudo[socket].x) + int(indexArray[int(index)-1][0]), int(mapPseudo[socket].y)+int(indexArray[int(index)-1][1]),maxX, maxY) #index -1 because placement start at 1
 
 
 def traiter_client(socket_client, conf):
     connected = True
     while connected:
-        wrapper = socket_client.makefile()
-        ligne = wrapper.readline()
+        # wrapper = socket_client.makefile()
+        # ligne = wrapper.readline()
+        ligne = socket_client.recv(1024)
+        ligne = ligne.decode()
         print('ENVOYE PAR CLIENT')
         print(ligne)
         jsonData = {}
@@ -144,7 +147,7 @@ def traiter_client(socket_client, conf):
             if jsonData["exchange"] == "logout":
                 connected = False
                 message = removeUser(sock_client)
-            if jsonData["exchange"] == "map":
+            if jsonData["exchange"] == "map" or jsonData["exchange"] == "refresh":
                 message = mapMessage(conf["map_number_row"], conf["map_number_col"], sock_client)
             if jsonData["exchange"] == "pause" or jsonData["exchange"] == "continue":
                 message = setPaused(sock_client, jsonData["exchange"] == "pause")

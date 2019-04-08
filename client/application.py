@@ -14,19 +14,17 @@ def loadConfiguration():
 def affichGrille(data):
     maxX = data["dimension"][0]
     maxY = data["dimension"][1]
-    if(data["self"]["x"]!= None):
+    if("self" in data):
         mine = data["self"]
-        print("Trouve")
     else:
         mine = [-1,-1]
-        print("define")
     others = data["robots"]
     ret = ""
     for x in range(0, int(maxX)):
         for y in range(0, int(maxY)):
-            if mine[0] == x and mine[1] == y:
+            if mine[0] == str(x) and mine[1] == str(y):
                 ret += " O "
-            elif [x, y] in others:
+            elif [str(x), str(y)] in others:
                 ret += " X "
             else:
                 ret += " - "
@@ -40,7 +38,7 @@ def deplacement(client):
     print("6 7 8\n")
     choice = input()
     awnser =client.moveRequest(choice)
-    return awnser["data"]["map"]
+    return awnser["data"]
 
 def afficherJoueurs(client):
     awnser = client.refreshPlayer()
@@ -62,6 +60,7 @@ if __name__ == "__main__":
         print(awnser)
         if(awnser["code"]==200):
             grid = awnser["data"]
+            print(grid)
             break
         else:
             print("Connection refusée par le serveur, code "+str(awnser["code"])+"\n")
@@ -69,19 +68,24 @@ if __name__ == "__main__":
     print(affichGrille(grid))
     #Besoin de rafraichir en cas d'erreur et d'afficher la signification du code
     while(True):
-        x = input("Choissisez votre première position (entrez d'abord la colonne puis la ligne la numérotation commence à 0)")
-        y = input()
+        print("Choissisez votre première position (entrez d'abord la colonne puis la ligne la numérotation commence à 0)\n")
+        x = input("Entrez x: ")
+        y = input("\nEntrez y: ")
         awnser = c1.placementRequest([x,y])
         if(awnser["code"] == 200):
-            grid = awnser["data"]
+            print("testest")
+            grid = c1.refreshRequest()
+            print(grid)
             break
         else:
-            print("Placement refusé par le serveur, code "+awnser["code"]+"\n")
+            print("Placement refusé par le serveur, code "+str(awnser["code"])+"\n")
+            exit(1)
 
     while(True):
         print(affichGrille(grid))
         print("\n Choissisez une action a effectuer : \n")
-        choice = input("1) Se déplacer \n 2) Mettre en pause \n 3)Afficher la liste des joueurs  \n 4) Actualiser la grille \n 5) Changer de pseudo \n 6) Enlever la pause \n Se déconnecter")
+        choice = input(" 1) Se déplacer \n 2) Mettre en pause \n 3) Afficher la liste des joueurs  \n 4) Actualiser la grille \n 5) Changer de pseudo \n 6) Enlever la pause \n 7) Se déconnecter \n")
+        choice =int(choice)
         if(choice==1):
             grid = deplacement(c1)
         elif(choice==2):

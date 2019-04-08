@@ -20,10 +20,7 @@ class Client:
     def placementRequest(self, coord):
         request = {
             "exchange":"placement",
-            "data":
-                {"position":
-                     [coord[0],coord[1]]
-                 }
+            "data":[coord[0],coord[1]]
         }
         self.sendRequest(request)
         return self.waitAwnser()
@@ -42,9 +39,9 @@ class Client:
         self.sendRequest(request)
         awnser = self.waitAwnser()
         if awnser["code"] ==200 :
-            return awnser["data"]["map"]
+            return awnser["data"]
         else:
-            print("Mauvais code")
+            print("Mauvais code" + str(awnser["code"]))
 
 
     def refreshPlayer(self):
@@ -97,14 +94,6 @@ class Client:
     def waitAwnser(self):
         awnser = self.sock.recv(1024)
         awnser = json.loads(awnser)
-        # wrapper = self.sock.makefile()
-        # while True:
-        #     newline = wrapper.readline()
-        #     print(newline)
-        #     if(newline == ""):
-        #         break
-        #     else:
-        #         awnser+=newline
         return awnser
 
 
