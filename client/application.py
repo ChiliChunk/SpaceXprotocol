@@ -52,7 +52,7 @@ def afficherJoueurs(client):
         print("\n")
 
 def changerPseudo(client):
-    choice = input("Entrez un nouveau pseudo")
+    choice = input("Entrez un nouveau pseudo\n")
     client.modRequest(choice)
 
 if __name__ == "__main__":
@@ -106,6 +106,8 @@ if __name__ == "__main__":
             c1.continueRequest()
         elif(choice ==7):
             c1.logoutRequest()
+            print("Deconnexion réussie")
+            exit(0)
         else:
             print("Choix invalide merci de réessayer \n")
 

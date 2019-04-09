@@ -93,7 +93,6 @@ class Client:
     def waitAwnser(self):
         awnser = self.sock.recv(1024)
         awnser = json.loads(awnser)
-        print(awnser)
         return awnser
 
 
