@@ -90,6 +90,16 @@ def setPosition(socket, x, y, maxX, maxY):
         return mapMessage(maxX,maxY,socket)
 
 
+def getStrat(socket_ask , data):
+    pseudoWanted = data["pseudo"]
+    portReceive = data["port"]
+    with lockRobots:
+        for sock , robot in mapPseudo.items():
+            if robot.name == pseudoWanted:
+                sock.send((json.dumps({"ip" : socket_ask.getpeername()[0] , "port": portReceive})).encode())
+        return {"code" : 200}
+
+
 def getRessources(x, y):
     with lockCells:
         if (x, y) in cellsWithRessources:
@@ -171,6 +181,8 @@ def traiter_client(socket_client, conf):
                 message = move(socket_client, jsonData["data"], conf["map_number_col"], conf["map_number_col"])
             if jsonData["exchange"] == "listof":
                 message = listOf(socket_client)
+            if jsonData["exchange"] == "getstrat":
+                message = getStrat(socket_client , jsonData["data"])
 
             print(message)
             writeLogLine(conf["logs"], mapPseudo[sock_client].name if socket_client in mapPseudo else socket_client.getpeername()[0], jsonData["exchange"],
