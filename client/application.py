@@ -1,6 +1,5 @@
 import client
 
-
 def loadConfiguration():
     configuration = {}
     conf = open('spaceX.conf', 'r')
@@ -51,10 +50,12 @@ def afficherJoueurs(client):
 def changerPseudo(client):
     choice = input("Entrez un nouveau pseudo")
     client.modRequest(choice)
+
 if __name__ == "__main__":
     config = loadConfiguration()
 
     c1 = client.Client(config["serverIp"], int(config["serverPort"]))
+    c1.initListenTCP()
 
     while(True):
         pseudo = input("Entrez un pseudo entre 2 et 20 charactères \n")
@@ -86,7 +87,7 @@ if __name__ == "__main__":
     while(True):
         print(affichGrille(grid))
         print("\n Choissisez une action a effectuer : \n")
-        choice = input(" 1) Se déplacer \n 2) Mettre en pause \n 3) Afficher la liste des joueurs  \n 4) Actualiser la grille \n 5) Changer de pseudo \n 6) Enlever la pause \n 7) Se déconnecter \n")
+        choice = input(" 1) Se déplacer \n 2) Mettre en pause \n 3) Afficher la liste des joueurs  \n 4) Actualiser la grille \n 5) Changer de pseudo \n 6) Enlever la pause \n 7) Se déconnecter \n 8) Avoir la strategie d'un autre joueur\n")
         choice =int(choice)
         if(choice==1):
             grid = deplacement(c1)
@@ -102,6 +103,10 @@ if __name__ == "__main__":
             c1.continueRequest()
         elif(choice ==7):
             c1.logoutRequest()
+        elif (choice ==8):
+            pseudo = input("Entrez le pseudo du joueur dont vous voulez la strategie : ")
+            port = input("Entrez le port sur lequel vous voulez recevoir la strategie : ")
+            c1.sendStratRequest(pseudo , port)
         else:
             print("Choix invalide merci de réessayer \n")
 
