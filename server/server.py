@@ -43,7 +43,7 @@ def mapMessage( col,row, socket):
         robotList = []
         for sock, robot in mapPseudo.items():
             if sock != socket:
-                robotList.append(( str(robot.x) , str(robot.y)))
+                robotList.append([ str(robot.x), str(robot.y)])
         result["data"]["robots"] = robotList
         selfRobot = mapPseudo[socket]
         if selfRobot.x != None:
@@ -96,7 +96,6 @@ def getRessources(x, y):
         if (x, y) in cellsWithRessources:
             temp = cellsWithRessources[(x, y)]
             del cellsWithRessources[(x, y)]
-            print()
             return temp
         else:
             return []

@@ -1,5 +1,5 @@
 import client
-
+import os
 
 def loadConfiguration():
     configuration = {}
@@ -13,6 +13,7 @@ def loadConfiguration():
 
 
 def affichGrille(data):
+    print(data)
     maxX = data["dimension"][0]
     maxY = data["dimension"][1]
     if("self" in data):
@@ -40,16 +41,27 @@ def deplacement(client):
     print("6 7 8\n")
     choice = input()
     awnser =client.moveRequest(choice)
+    if("ressource" in awnser["data"]):
+        os.system("clear")
+        print("Vous avez trouvé : \n")
+        for res in awnser["data"]["ressource"]:
+            print(res+"\n")
+        print("\n")
+        input("Appuyer sur n'importe quelle touche pour continuer")
     return awnser["data"]
 
 def afficherJoueurs(client):
+    os.system("clear")
     awnser = client.refreshPlayer()
     print("Tous les joueurs :")
     for play in awnser:
-        print(play["pseudo"])
+        print("\t"+play["pseudo"])
         if "ressources" in play:
-            print(play["ressources"])
+            for res in play["ressources"]:
+                print("\t\t"+res+ " : "+ str(play["ressources"][res])+"\n")
         print("\n")
+    input("Appuyer sur n'importe quelle touche pour continuer")
+    os.system("clear")
 
 def changerPseudo(client):
     choice = input("Entrez un nouveau pseudo\n")
@@ -59,7 +71,7 @@ if __name__ == "__main__":
     config = loadConfiguration()
 
     c1 = client.Client(config["serverIp"], int(config["serverPort"]))
-
+    paused = False
     while(True):
         pseudo = input("Entrez un pseudo entre 2 et 20 charactères \n")
         awnser = c1.connectionRequest(pseudo)
@@ -79,32 +91,37 @@ if __name__ == "__main__":
         y = input("\nEntrez y: ")
         awnser = c1.placementRequest([x,y])
         if(awnser["code"] == 200):
-            print("testest")
             grid = c1.refreshRequest()
-            print(grid)
             break
         else:
             print("Placement refusé par le serveur, code "+str(awnser["code"])+"\n")
             exit(1)
 
     while(True):
+        os.system("clear")
+        print("~~~~~~~~~~~~SPACE X~~~~~~~~~~~~\n".center(20))
         print(affichGrille(grid))
         print("\n Choissisez une action a effectuer : \n")
-        choice = input(" 1) Se déplacer \n 2) Mettre en pause \n 3) Afficher la liste des joueurs  \n 4) Actualiser la grille \n 5) Changer de pseudo \n 6) Enlever la pause \n 7) Se déconnecter \n")
+        choice = input(" 1) Se déplacer \n 2) Mettre en pause \n 3) Afficher la liste des joueurs  \n 4) Changer de pseudo \n 5) Enlever la pause \n 6) Se déconnecter \n")
         choice =int(choice)
         if(choice==1):
-            grid = deplacement(c1)
+            deplacement(c1)
+            grid = c1.refreshRequest()
         elif(choice==2):
+            paused = True
             c1.pauseRequest()
+            grid = c1.refreshRequest()
         elif(choice ==3):
             afficherJoueurs(c1)
-        elif(choice==4):
             grid = c1.refreshRequest()
-        elif(choice ==5):
+        elif(choice ==4):
             changerPseudo(c1)
-        elif(choice==6):
+            grid = c1.refreshRequest()
+        elif(choice==5):
+            paused = False
             c1.continueRequest()
-        elif(choice ==7):
+            grid = c1.refreshRequest()
+        elif(choice ==6):
             c1.logoutRequest()
             print("Deconnexion réussie")
             exit(0)

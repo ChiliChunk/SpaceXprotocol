@@ -94,15 +94,3 @@ class Client:
         awnser = self.sock.recv(1024)
         awnser = json.loads(awnser)
         return awnser
-
-
-
-if __name__ == "__main__":
-    c1 = Client("127.0.0.1", 12345)
-    c1.connectionRequest("ZOUGLOU31")
-    c1.placementRequest([3,3])
-    c1.sock.close()
-
-    # Create a new thread for each new request send to the server
-
-    # Une thread ouverte en permanence pour la reception de message
