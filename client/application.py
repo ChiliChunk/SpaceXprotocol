@@ -44,11 +44,14 @@ def deplacement(client):
 def afficherJoueurs(client):
     awnser = client.refreshPlayer()
     print("Tous les joueurs :")
-    for play in awnser["data"]:
-        print(play["pseudo"]+ "\n")
+    for play in awnser:
+        print(play["pseudo"])
+        if "ressources" in play:
+            print(play["ressources"])
+        print("\n")
 
 def changerPseudo(client):
-    choice = input("Entrez un nouveau pseudo")
+    choice = input("Entrez un nouveau pseudo\n")
     client.modRequest(choice)
 
 if __name__ == "__main__":
@@ -103,6 +106,9 @@ if __name__ == "__main__":
             c1.continueRequest()
         elif(choice ==7):
             c1.logoutRequest()
+            print("Deconnexion réussie")
+            c1.sock.close()
+            exit(0)
         elif (choice ==8):
             pseudo = input("Entrez le pseudo du joueur dont vous voulez la strategie : ")
             port = input("Entrez le port sur lequel vous voulez recevoir la strategie : ")
@@ -110,4 +116,3 @@ if __name__ == "__main__":
         else:
             print("Choix invalide merci de réessayer \n")
 
-    c1.sock.close()

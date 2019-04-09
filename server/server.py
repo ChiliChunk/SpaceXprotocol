@@ -70,6 +70,7 @@ def changeName(socket, newName):
         if not checkLoggedIn(socket):
             return {"code": 500}
         mapPseudo[socket].name = newName
+        return {"code":200}
 
 
 def setPosition(socket, x, y, maxX, maxY):
@@ -125,7 +126,10 @@ def listOf(socket):
             return {"code": 500}
         robots = []
         for sock , robot in mapPseudo.items():
-            robots.append({"pseudo" : robot.name , "ressources" : robot.ressources})
+            if robot.ressources == {}:
+                robots.append({"pseudo": robot.name})
+            else:
+                robots.append({"pseudo" : robot.name , "ressources" : robot.ressources})
         return ({"code" : 200 , "data" : robots})
 
 
@@ -172,8 +176,8 @@ def traiter_client(socket_client, conf):
                 message = mapMessage(conf["map_number_row"], conf["map_number_col"], sock_client)
             if jsonData["exchange"] == "pause" or jsonData["exchange"] == "continue":
                 message = setPaused(sock_client, jsonData["exchange"] == "pause")
-            if jsonData["exchange"] == "changeName":
-                message = changeName(socket_client, jsonData["pseudo"])
+            if jsonData["exchange"] == "mod":
+                message = changeName(socket_client, jsonData["data"])
             if jsonData["exchange"] == "placement":
                 message = placement(socket_client, jsonData["data"][0], jsonData["data"][1], conf["map_number_col"],
                                     conf["map_number_col"])

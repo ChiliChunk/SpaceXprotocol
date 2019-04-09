@@ -11,7 +11,7 @@ class Client:
         self.sock = socket()
         self.sock.connect((ipServ, portServ))
 
-    def connectionRequest(self, pseudo):
+    def connectionRequest(self,pseudo):
         request = {
             "pseudo": pseudo,
             "exchange": "login"
