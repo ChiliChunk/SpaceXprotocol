@@ -69,19 +69,19 @@ Table of Contents
        2.1.2 List of all available exchange names:  . . . . . . . . .  4
        2.1.3 Important structures . . . . . . . . . . . . . . . . . .  5
        2.1.4 Details of each exchanges: . . . . . . . . . . . . . . .  6
-     2.4 Response code and errors : . . . . . . . . . . . . . . . . . 15
+         2.1.4.1 login  . . . . . . . . . . . . . . . . . . . . . . .  6
+         2.1.4.2 logout . . . . . . . . . . . . . . . . . . . . . . .  6
+         2.1.4.3 placement  . . . . . . . . . . . . . . . . . . . . .  7
+         2.1.4.4 move [X] . . . . . . . . . . . . . . . . . . . . . .  8
+         2.1.4.5 pause  . . . . . . . . . . . . . . . . . . . . . . .  9
+         2.1.4.6 continue : . . . . . . . . . . . . . . . . . . . . .  9
+         2.1.4.7 listof . . . . . . . . . . . . . . . . . . . . . . . 10
+         2.1.4.8 mod  . . . . . . . . . . . . . . . . . . . . . . . . 11
+         2.1.4.9 refresh  . . . . . . . . . . . . . . . . . . . . . . 12
+         2.1.4.10 getstrat  . . . . . . . . . . . . . . . . . . . . . 12
+     2.4 Response code and errors : . . . . . . . . . . . . . . . . . 14
      2.5 Security considerations  . . . . . . . . . . . . . . . . . . 15
-   3 Reference  . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
-
-
-
-
-
-
-
-
-
-
+   3 References . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
 
 
 
@@ -179,13 +179,12 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
       	 {
 
-     		  pseudo : client's pseudo,
-
      		  exchange: exchange name,
 
      		  <data : argument or data>
 
      	 }
+
 
    	Server response:
 
@@ -196,6 +195,7 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
      		  <data : argument or data>
 
         	 }
+
 
    All codes are 3 digit numbers, you can see all the possible codes and
    their meaning at the end of the rfc.
@@ -215,9 +215,9 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
      		  continue
 
-     		  listPlayers
+     		  listof
 
-     		  changeName
+     		  mod
  
 
 
@@ -226,9 +226,9 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 RFC                        <SpaceX Protocol>                <22/03/2019>
 
 
-     		  requestStrat 		  											                    refresh
+   		  refresh
 
-     		  mod
+   		  getstrat
 
 
 
@@ -259,17 +259,17 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
    Example : 
 
-   map:
+   data:
 
    {
 
-   	dimension:[10,10],
+   	"dimension":[10,10],
 
-   	robots:[[4,3],[0,9],[1,3]],
+   	"robots":[[4,3],[0,9],[1,3]],
 
-   	self:[5,5]
+   	"self":[5,5]
 
-   	ressource:[iron]
+   	"ressource":[iron]
 
    }
 
@@ -284,7 +284,7 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
 2.1.4 Details of each exchanges:
 
-   login :
+2.1.4.1 login
 
    "The client sends to the server a connection request with the given
    pseudo. The server check if the pseudo is already used."
@@ -302,22 +302,21 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
    (code 401)
 
    If the pseudo contains less than 2 characters or more than 20
-   characters (code 402)
+   characters (code 401)
 
 
    Example :  
 
    {
 
-   	pseudo:"nacho",
+   	"pseudo": "nacho",
 
-   	exchange:"login"
+   	"exchange": "login"
 
    }
 
 
-
-   logout :
+2.1.4.2 logout
 
    "The client sends a request to the server for the disconnection,
    closing the sockets that allow this connection"
@@ -330,6 +329,7 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
    Example :
 
+   {
  
 
 
@@ -338,67 +338,34 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 RFC                        <SpaceX Protocol>                <22/03/2019>
 
 
-   {
-
-   	pseudo : "nacho",
-
-   	exchange :"logout"
+   	"exchange": "logout"
 
    }    
 
 
-   placement :
+2.1.4.3 placement
 
    After the login the server send a copy of the map (see the structure
    at 2.1.3 Important structures) (code 200) to the client and wait for
    the answer of the client.
 
-
-   Example of server message:
-
-   {
-
-       code:200,
-
-       data:{
-
-      	 map:{
-
-      		 maxX: 9,
-
-      		 maxY: 9,
-
-      		 robots:[{6,8},{4,3}]
-
-      	 }
-
-   }
-
-
    Then the client has to answer the position where he wants his robot
    to be. The command is "placement" and the data will follow the
    following structure
 
-   data:[X position wished, Y position wished]
+
+   		data:[X position wished, Y position wished]
 
 
    Example of client message:
 
 
         {
- 
 
 
-<>                                                              [Page 7]
-
-RFC                        <SpaceX Protocol>                <22/03/2019>
+     		 "exchange": "placement",
 
-
-     		 pseudo : "nacho",
-
-     		 exchange:"placement",
-
-      	 	 data : [4,5]
+      	 	 "data": [4,5]
 
        }
 
@@ -413,17 +380,42 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
    Illegal position, the client either tried a position outside the
    grid, or on another robot In this case the server will resend a copy
-   of the map and wait for another "placement" request (code 411)
+   of the map and wait for another "placement" request (code 403)
 
    Wrong action order, if the client tried to send this request while he
-   was already on the grid (code 405)
+   was already on the grid (code 402)
 
 
-   move [X] :
+ 
+
+
+<>                                                              [Page 7]
+
+RFC                        <SpaceX Protocol>                <22/03/2019>
+
+
+2.1.4.4 move [X]
 
    "The client sends a request to the server that move the robot to the
    X adjacent case in the map, the server will check if the given X is
    correct, between 1 and 8"
+
+
+   	1 -> Move up-left
+
+   	2 -> Move up
+
+   	3 -> Move up-right
+
+   	4 -> Move left
+
+   	5 -> Move right
+
+   	6 -> Move down-left
+
+   	7 -> Move down
+
+   	8 -> Move down-right
 
 
    Possible responses:
@@ -439,8 +431,16 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
    If the given X is incorrect (X<1 or X>8) (code 404)
 
    The client tried to move before placing his robot on the grid (code
-   405)
+   402)
 
+
+   Example :
+
+   {
+
+   	"exchange": "move", 
+
+   	"data": {4}
 
  
 
@@ -450,20 +450,11 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 RFC                        <SpaceX Protocol>                <22/03/2019>
 
 
-   Example :
-
-   {
-
-   	pseudo:"nacho",
-
-   	exchange:"move", 
-
-   	data :{4}
-
    }
 
 
-   pause :
+
+2.1.4.5 pause
 
    "The client will send a request to the server to pause the robot, as
    long as the robot is paused, the client will not be able to move him,
@@ -479,31 +470,24 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
    Possible errors:
 
    If the robot is already in pause, the server will show a message
-   (code 405)
+   (code 402)
 
 
    Example : 
 
    {
 
-   	pseudo : "nacho",
-
-   	exchange: "pause"
+   	"exchange": "pause"
 
    }
 
 
-   continue :
+
+2.1.4.6 continue :
 
    "The client will send a request to the server allowing him to move
    his robot again, this command has only effect if a robot is in pause,
    otherwise it will do nothing. No data required."
- 
-
-
-<>                                                              [Page 9]
-
-RFC                        <SpaceX Protocol>                <22/03/2019>
 
 
    Possible responses:
@@ -514,21 +498,28 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
    Possible errors:
 
-   Robot not paused (code 405)
+ 
+
+
+<>                                                              [Page 9]
+
+RFC                        <SpaceX Protocol>                <22/03/2019>
+
+
+   Robot not paused (code 402)
 
 
    Example:
 
    {
 
-   	pseudo: "nacho",
-
-   	exchange: "continue"
+   	"exchange": "continue"
 
    }
 
 
-   listof:
+
+2.1.4.7 listof
 
    "The client will send a request to the server, the server will
    respond with a message containing the pseudos of the other robots
@@ -552,17 +543,7 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
    {
 
-   	pseudo: "nacho",
-
- 
-
-
-<>                                                             [Page 10]
-
-RFC                        <SpaceX Protocol>                <22/03/2019>
-
-
-   	exchange="listof"
+   	"exchange": "listof"
 
    }
 
@@ -573,29 +554,34 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
    code: 200,
 
+ 
+
+
+<>                                                             [Page 10]
+
+RFC                        <SpaceX Protocol>                <22/03/2019>
+
+
    data: 
 
-   [{
+   [{ 		"pseudo": "django",
 
-   		pseudo:"django",
+   	 	"ressources": {
 
-   	 	ressources: {
+   			"iron": 5,
 
-   			iron:5,
-
-   			wood:18 			
+   			"wood": 18 			
 
    			    },
 
-   	{
 
-   	pseudo:"nini"
+   	{	"pseudo":"nini"
 
    	}]}
 
 
 
-   mod:
+2.1.4.8 mod
 
    "The client will send a request to the server to change his pseudo"
 
@@ -610,18 +596,10 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
    Possibles errors :
 
    If the pseudo is already used, the server rejects the connection
- 
-
-
-<>                                                             [Page 11]
-
-RFC                        <SpaceX Protocol>                <22/03/2019>
-
-
    (code 401)
 
    If the pseudo contains less than 2 characters or more than 20
-   characters (code 402)
+   characters (code 401)
 
 
 
@@ -631,17 +609,22 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
    {
 
-   	pseudo: "nacho",
+   	"exchange": "mod", 
+ 
 
-   	exchange: "mod", 
 
-   	data:"pablo"
+<>                                                             [Page 11]
+
+RFC                        <SpaceX Protocol>                <22/03/2019>
+
+
+   	"data": "pablo"
 
    }
 
 
 
-   refresh :
+2.1.4.9 refresh
 
    "The client ask for the map. No data required"
 
@@ -658,21 +641,13 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
    {
 
-   	pseudo:"nacho"
-
-   	exchange:"refresh"
+   	"exchange" :"refresh"
 
    }
 
 
-   getstrat:
- 
 
-
-<>                                                             [Page 12]
-
-RFC                        <SpaceX Protocol>                <22/03/2019>
-
+2.1.4.10 getstrat
 
    "The client will send a request to the server asking for another
    client strategy. The server will then transmit the IP and port of the
@@ -686,11 +661,17 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
    data: {
 
-   	pseudo :Pseudo of the client from which we want the strategy, 
+   	"pseudo": Pseudo of the client from which we want the strategy, 
 
-   	port: The port on which we want this exchange
+   	"port": The port on which we want this exchange
 
    }
+ 
+
+
+<>                                                             [Page 12]
+
+RFC                        <SpaceX Protocol>                <22/03/2019>
 
 
    Possibles responses :
@@ -700,7 +681,7 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
    Possibles errors :
 
-   The pseudo doesn't correspond to any existing client (code 406)
+   The pseudo doesn't correspond to any existing client (code 404)
 
    "The server will then transmit the request and the coordinates to the
    other client using the code 101. The other can then send a text file
@@ -710,11 +691,15 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
    Data model
 
-   data : {pseudo :The pseudo of the client requesting,
+   data: {
 
-   IP: The IP of the client requesting,
+   		pseudo :The pseudo of the client requesting,
 
-   port: The port of the client requesting} 
+   		IP: The IP of the client requesting,
+
+   		port: The port of the client requesting
+
+   } 
 
 
 
@@ -722,6 +707,21 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
    Client A request :
 
+   {
+
+   	"exchange": "getstrat",
+
+   	"data": {
+
+   		"pseudo": "B",
+
+   		"port": "1234"
+
+   		}
+
+   }
+
+   Server response (to client A):
  
 
 
@@ -729,24 +729,6 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
 RFC                        <SpaceX Protocol>                <22/03/2019>
 
-
-   {
-
-   	pseudo : "A",
-
-   	exchange :"getstrat",
-
-   	data:{
-
-   		pseudo:"B",
-
-   		port:"1234"
-
-   		}
-
-   }
-
-   Server response (to client A):
 
    {code :200}
 
@@ -757,33 +739,15 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
    	data:{
 
-   		pseudo:"A",
+   		"pseudo": "A",
 
-   		IP:"192.12.0.4",
+   		"IP": "192.12.0.4",
 
-   		port:1234
+   		"port": 1234
 
    	     }
 
    }
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
-
-<>                                                             [Page 14]
-
-RFC                        <SpaceX Protocol>                <22/03/2019>
 
 
 2.4 Response code and errors :
@@ -808,19 +772,18 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
     |   Error code   |                    Description                |  
     +----------------+-----------------------------------------------+  
     |     200        |    The request has been executed successfully |  
-    |     401        |    Try to use an already existing pseudo      |  
-    |     402        |    Try to connect with a name length < 2      |  
-    |     410        |    Tried to do an action while in pause       |
-    |     403        |    Try to move outside the map or on another  |  
-    |                |    robot                                      |  
-    |     404        |    Try to move with an illegal movement       |  
-    |                |    argument (<1 or >8)                        |  
-    |     405        |    Wrong order of actions                     |  
-    |     406        |    Tried to use a pseudo that doesn't exist   |  
-    |     411        |    Illegal Position                           |  
+    |     401        |    Illegal pseudo                             |  
+    |     402        |    Wrong order of actions                     |  
+    |     403        |    Try to move, positioning outside the map   |  
+    |                |    or on another robot                        |  
+    |     404        |    Bad format of request                      |  
     +----------------------------------------------------------------+
+ 
 
 
+<>                                                             [Page 14]
+
+RFC                        <SpaceX Protocol>                <22/03/2019>
 
 
 2.5 Security considerations
@@ -834,19 +797,11 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
    Encrypted
 
- 
-
-
-<>                                                             [Page 15]
-
-RFC                        <SpaceX Protocol>                <22/03/2019>
-
-
    Then encryption will not be implemented in the first version of the
    protocol, it's will be a necessary step in the future of the
    protocol.
 
-3 Reference
+3 References
 
    [RFC 1939] J. Myers., "Post Office Protocol - Version 3", STD 53, RFC
    1939, Dover Beach Consulting, Inc., May 1996.
@@ -882,15 +837,4 @@ RFC                        <SpaceX Protocol>                <22/03/2019>
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-<>                                                             [Page 16]
+<>                                                             [Page 15]
