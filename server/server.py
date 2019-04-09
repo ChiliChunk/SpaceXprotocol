@@ -17,7 +17,7 @@ def checkLoggedIn(socket):
 
 def addUser(pseudo, socket , col , row):
     if len(pseudo) < 2:
-        return {"code" : 402}
+        return {"code" : 401}
     with lockRobots:
         for sock , robots in mapPseudo.items():
             if robots.name == pseudo:
@@ -29,25 +29,25 @@ def addUser(pseudo, socket , col , row):
 def removeUser(socket):
     with lockRobots:
         if not checkLoggedIn(socket):
-            return {"code": 500}
+            return {"code": 402}
         del mapPseudo[socket]
         return {"code": 200}
 
 
 def mapMessage( col,row, socket):
     if not checkLoggedIn(socket):
-        return {"code" : 500}
+        return {"code" : 402}
     else:
         result = {"data" : {}}
-        result["data"]["dimension"] = [col, row]
+        result["data"]["dimension"] = [int(col), int(row)]
         robotList = []
         for sock, robot in mapPseudo.items():
             if sock != socket:
-                robotList.append([ str(robot.x), str(robot.y)])
+                robotList.append([ int(robot.x), int(robot.y)])
         result["data"]["robots"] = robotList
         selfRobot = mapPseudo[socket]
         if selfRobot.x != None:
-            result["data"]["self"] = [str(selfRobot.x), str(selfRobot.y)]
+            result["data"]["self"] = [int(selfRobot.x), int(selfRobot.y)]
         result["code"] = 200
         return result
 
@@ -55,7 +55,7 @@ def mapMessage( col,row, socket):
 def setPaused(socket, isPaused):
     with lockRobots:
         if not checkLoggedIn(socket):
-            return {"code": 500}
+            return {"code": 402}
         mapPseudo[socket].isPaused = isPaused
         return {"code": 200}
 
@@ -68,7 +68,7 @@ def writeLogLine(fileName, pseudo, command, code):
 def changeName(socket, newName):
     with lockRobots:
         if not checkLoggedIn(socket):
-            return {"code": 500}
+            return {"code": 402}
         mapPseudo[socket].name = newName
         return {"code":200}
 
@@ -76,14 +76,14 @@ def changeName(socket, newName):
 def setPosition(socket, x, y, maxX, maxY):
     if int(x) >= int(maxX) or int(x) < 0 or int(y) >= int(maxY) or int(y) < 0:  # placement outside of the grid
         print("ICI")
-        return {"code": 411}
+        return {"code": 403}
     with lockRobots:
         if mapPseudo[socket].isPaused:
-            return {"code" : 410}
+            return {"code" : 402}
         for robot in mapPseudo.values():
             if robot.x == x and robot.y == y:  # try placement on another robot
                 print("LA")
-                return {"code": 411}
+                return {"code": 403}
         mapPseudo[socket].x = x
         mapPseudo[socket].y = y
         mapPseudo[socket].addRessources(getRessources(x, y))
@@ -103,16 +103,16 @@ def getRessources(x, y):
 
 def placement(socket, x, y, maxX, maxY):
     if mapPseudo[socket].x != None or mapPseudo[socket].y != None:
-        return {"code": 405}
+        return {"code": 402}
     with lockRobots:
         if not checkLoggedIn(socket):
-            return {"code": 500}
+            return {"code": 402}
     return setPosition(socket, x, y, maxX, maxY)
 
 def listOf(socket):
     with lockRobots:
         if not checkLoggedIn(socket):
-            return {"code": 500}
+            return {"code": 402}
         robots = []
         for sock , robot in mapPseudo.items():
             if robot.ressources == {}:
@@ -126,10 +126,10 @@ def move(socket, index, maxX, maxY):
     if mapPseudo[socket].x == None or mapPseudo[socket].y == None:
         return {"code": 405}
     if int(index) < 1 or int(index) > 8:
-        return {"code": 404}
+        return {"code": 405}
     with lockRobots:
         if not checkLoggedIn(socket):
-            return {"code": 500}
+            return {"code": 402}
     indexArray = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
 
     return setPosition(socket, int(mapPseudo[socket].x) + int(indexArray[int(index)-1][0]), int(mapPseudo[socket].y)+int(indexArray[int(index)-1][1]),maxX, maxY) #index -1 because placement start at 1
@@ -145,13 +145,13 @@ def traiter_client(socket_client, conf):
         print('ENVOYE PAR CLIENT')
         print(ligne)
         jsonData = {}
-        message = {"code" : 491} #message for valid json but "exchange" not present in json
+        message = {"code" : 405} #message for valid json but "exchange" not present in json
         canProcess = False
         try:
             jsonData = json.loads(ligne)
             canProcess = "exchange" in jsonData
         except Exception:
-            message = {"code": 499}
+            message = {"code": 405}
         print(jsonData)
         print(canProcess)
         if canProcess:
