@@ -1,6 +1,8 @@
 import client
 import os
 
+
+"""Charge la configuration dans le fichier spaceX.conf retourne un dictionnaire contenant tous les réglages et leurs valeurs"""
 def loadConfiguration():
     configuration = {}
     conf = open('spaceX.conf', 'r')
@@ -11,7 +13,7 @@ def loadConfiguration():
         configuration[data[0]] = data[1].replace("\n", "")
     return configuration
 
-
+"""Prend en paramètre la map en json envoyé par le serveur pour l'afficher"""
 def affichGrille(data):
 
     maxX = data["dimension"][0]
@@ -35,7 +37,7 @@ def affichGrille(data):
     print(ret)
     print("\n Les X symbolisent les autres robot, le O représente votre robot")
 
-
+""""Demande une direction de deplacement puis apelle la fonction move du client"""
 def deplacement(client):
     print("Veuillez choisir une direction de déplacement pour le robot (en suivant le schéma ci-dessous ou R représente le robot)")
     print("1  2  3\n\n")
@@ -56,6 +58,7 @@ def deplacement(client):
             print("\n")
             input("Appuyer sur n'importe quelle touche pour continuer")
 
+"""Apelle la fonction refresh du serveur puis affiche tous les joueurs et leurs ressources"""
 def afficherJoueurs(client):
     os.system("clear")
     anwser = client.refreshPlayer()
@@ -68,6 +71,7 @@ def afficherJoueurs(client):
         print("\n")
     input("Appuyer sur n'importe quelle touche pour continuer")
 
+"""Apelle la fonction pause du client puis attend une saisie avant d'appeler le continue"""
 def mettreEnPause(client):
     client.pauseRequest()
     os.system("clear")
@@ -75,7 +79,7 @@ def mettreEnPause(client):
     input("Appuyer sur n'importe quelle touche pour redémarrer le programme")
     client.continueRequest()
 
-
+"""Demande une saisie puis apelle la fonction mod du client"""
 def changerPseudo(client):
     choice = input("Entrez un nouveau pseudo\n")
     client.modRequest(choice)
