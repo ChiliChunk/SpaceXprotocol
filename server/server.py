@@ -9,12 +9,14 @@ from random import randint
 
 lockRobots = threading.Semaphore()
 lockCells = threading.Semaphore()
-mapPseudo = {}
-cellsWithRessources = {}
+mapPseudo = {} #dict clé=>  socket , value=> Robot
+cellsWithRessources = {} #dict clé => (x,y) , value =>liste ressource sur cette coord
 
+#Vérifie si la socket appartient a un client qui est loggé ou non
 def checkLoggedIn(socket):
     return socket in mapPseudo
 
+#ajoute un couple socket robot au dictionnaire mapPseudo avec test légalité
 def addUser(pseudo, socket , col , row):
     if len(pseudo) < 2:
         return {"code" : 401}
@@ -25,7 +27,7 @@ def addUser(pseudo, socket , col , row):
         mapPseudo[socket] = Robot.Robot(pseudo)
         return mapMessage(row,col,socket)
 
-
+#supprime un couple socket robot au dictionnaire mapPseudo avec test légalité
 def removeUser(socket):
     with lockRobots:
         if not checkLoggedIn(socket):
@@ -33,7 +35,7 @@ def removeUser(socket):
         del mapPseudo[socket]
         return {"code": 200}
 
-
+#renvoi un message du contenu de la map comme convenu dans la rfc
 def mapMessage( col,row, socket):
     if not checkLoggedIn(socket):
         return {"code" : 402}
@@ -51,7 +53,7 @@ def mapMessage( col,row, socket):
         result["code"] = 200
         return result
 
-
+#met en pause le robot associé au socket en parametre
 def setPaused(socket, isPaused):
     with lockRobots:
         if not checkLoggedIn(socket):
@@ -59,12 +61,12 @@ def setPaused(socket, isPaused):
         mapPseudo[socket].isPaused = isPaused
         return {"code": 200}
 
-
+#ecrit un ligne dans les logs du serveur
 def writeLogLine(fileName, pseudo, command, code):
     with open(fileName, "a") as f:
         f.write(f"{round(time.time())}   {pseudo}   {command}   {code}\n")
 
-
+#permet au robot associé au socket en paramètre de changer de nom pour le nom passer en parametre
 def changeName(socket, newName):
     with lockRobots:
         if not checkLoggedIn(socket):
@@ -72,7 +74,7 @@ def changeName(socket, newName):
         mapPseudo[socket].name = newName
         return {"code":200}
 
-
+#defini la position d'un robot avec test de legalité de la nouvelle possition
 def setPosition(socket, x, y, maxX, maxY):
     if int(x) >= int(maxX) or int(x) < 0 or int(y) >= int(maxY) or int(y) < 0:  # placement outside of the grid
         print("ICI")
@@ -90,7 +92,7 @@ def setPosition(socket, x, y, maxX, maxY):
         print(mapPseudo[socket])
         return mapMessage(maxX,maxY,socket)
 
-
+#permet de recuperer les ressources d'une case et de supprimer cette case de la liste des cases avec ressources
 def getRessources(x, y):
     with lockCells:
         if (x, y) in cellsWithRessources:
@@ -100,7 +102,7 @@ def getRessources(x, y):
         else:
             return []
 
-
+#permet de placer son robot quand le client vient de se connecter et qu'il n'a pas encore de position
 def placement(socket, x, y, maxX, maxY):
     if mapPseudo[socket].x != None or mapPseudo[socket].y != None:
         return {"code": 402}
@@ -109,6 +111,7 @@ def placement(socket, x, y, maxX, maxY):
             return {"code": 402}
     return setPosition(socket, x, y, maxX, maxY)
 
+#renvoi la liste des autre utilisateur que celui qui demande la liste
 def listOf(socket):
     with lockRobots:
         if not checkLoggedIn(socket):
@@ -121,7 +124,7 @@ def listOf(socket):
                 robots.append({"pseudo" : robot.name , "ressources" : robot.ressources})
         return ({"code" : 200 , "data" : robots})
 
-
+#permet de bouger quand le robot est deja placé
 def move(socket, index, maxX, maxY):
     if mapPseudo[socket].x == None or mapPseudo[socket].y == None:
         return {"code": 405}
@@ -134,7 +137,7 @@ def move(socket, index, maxX, maxY):
 
     return setPosition(socket, int(mapPseudo[socket].x) + int(indexArray[int(index)-1][0]), int(mapPseudo[socket].y)+int(indexArray[int(index)-1][1]),maxX, maxY) #index -1 because placement start at 1
 
-
+#fonction de routing qui permet d'aguiller chaque requete client et de faire les premier test de legalité sur la requete
 def traiter_client(socket_client, conf):
     connected = True
     while connected:
@@ -184,7 +187,7 @@ def traiter_client(socket_client, conf):
                          "BAD_FORMAT", message["code"])
         socket_client.send((json.dumps(message) + "\n").encode())
 
-
+#charge le fichier de configuration et renvoie un dictionnaire avec comme clé les variables du fichier et comme valeur  les valeur des variable dans le ficher
 def loadConfiguration():
     configuration = {}
     conf = open('spaceXserver.conf', 'r')
@@ -195,7 +198,8 @@ def loadConfiguration():
         configuration[data[0]] = data[1].replace("\n", "")
     return configuration
 
-
+#creer un dictionnaire avec une liste de couple (x,y) et la liste des ressources présente sur la case en fonction du type des ressources et de leur rareté comme précisé dans le fichier de conf
+#si une case n'a pas de ressource, elle ne figure pas dans le dictionnaire
 def createMap(row, col, ressources):
     result = {}
     ressourcesDict = json.loads(ressources)
@@ -209,7 +213,7 @@ def createMap(row, col, ressources):
                 result[(i, j)] = currentRessources
     return result
 
-
+#main qui permet principalement de créé la socket serveur, d'initier la map et le dictionnaire avec les configuration et d'accepter les connexion client par le biais de threads
 if __name__ == '__main__':
     conf = loadConfiguration()
     cellsWithRessources = createMap(int(conf['map_number_row']), int(conf['map_number_col']), conf["ressources"])
