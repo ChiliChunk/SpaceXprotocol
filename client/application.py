@@ -1,6 +1,5 @@
 import client
 import os
-from colorama import Fore, Back, Style
 
 def loadConfiguration():
     configuration = {}
@@ -101,7 +100,7 @@ if __name__ == "__main__":
         x = input("Entrez la colonne (entre 0 et "+str(grid["dimension"][0]) + " non-inclus) :")
         y = input("\nEntrez la ligne (entre 0 et "+str(grid["dimension"][1]) + " non-inclus) :")
         try :
-            if(int(x) > 0 and int(x)< int(grid["dimension"][0]) and int(y)>0 and int(y)and int(grid["dimension"][1])):
+            if(int(x) > 0 and int(x)<= int(grid["dimension"][0]) and int(y)>=0 and int(y)< int(grid["dimension"][1])):
                 anwser = c1.placementRequest([x, y])
                 if (anwser["code"] == 200):
                     grid = c1.refreshRequest()
